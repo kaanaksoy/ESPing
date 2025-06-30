@@ -62,7 +62,7 @@ void setup() {
       delay(50);
     }
   }  
-  delay(100);
+  delay(1000);
   mqttClient.publish(STATE_TOPIC, "released", /*retain=*/true);
 
   delay(50);
