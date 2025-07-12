@@ -2,9 +2,9 @@
 #define DEFINES_H
 
 // User Configurable Settings
-#define DEVICE_NAME "ESPing01-3" // Name of the device as it appears in MQTT
-#define DEVICE_ID "esping01-7"   // Make sure -x is unique
-#define DISCOVERY_ENABLED        // Set to false to disable MQTT discovery
+#define DEVICE_NAME "ESPing01-1" // Name of the device as it appears in MQTT
+#define DEVICE_ID "esping01-1"   // Make sure -x is unique
+// #define DISCOVERY_ENABLED        // Set to false to disable MQTT discovery
 // #define BUILT_IN_LED_ENABLED // Enable this to use the built-in LED on the Beetle ESP32-C6 V1.0
 
 // Basic Pin Definitions
@@ -21,7 +21,7 @@
 #define COMMAND_TOPIC TOPIC_BASE "/command"
 #define BATTERY_TOPIC TOPIC_BASE "/battery"
 #define DISCOVERY_PREFIX "homeassistant" // Make sure this matches your HASS MQTT config
-#define SW_VERSION "0.1.1"               // Software version for discovery
+#define SW_VERSION "0.2.0"               // Software version for discovery
 #define HW_VERSION "0.1"                 // Hardware version for discovery
 #define WIFI_TIMEOUT 5000
 
@@ -39,8 +39,7 @@
 #define BATT_ADC_PIN 0                    // ADC pin for the battery monitoring (For the Beetle ESP32-C6 V1.0 it's GPIO 0)
 #define VOLTAGE_CALIBRATION_FACTOR 1.0186 // Calibration factor for the battery voltage (differentiates between microcontrollers)
 #define uS_TO_S_FACTOR 1000000ULL         /* Conversion factor for micro seconds to seconds */
-#define OPERATING_VOLTAGE 3.3             // If you are using a different supply voltage, change this. (it is used to calculate the potentiometer percentage)
-// #define MQTT_MAX_PACKET_SIZE 1024
+
+// #define SERIAL_DEBUG_ENABLED // Enable this to use the serial debug output
 // DEBUGGING
-#define SERIAL_DEBUG_ENABLED // Enable this to use the serial debug output
 #endif

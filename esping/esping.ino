@@ -95,7 +95,9 @@ void setup()
 
   mqttClient.setCallback(mqttCallback);
   mqttClient.subscribe(COMMAND_TOPIC, 1);
+#ifdef DISCOVERY_ENABLED
   checkAndSendDiscovery();
+#endif
   loadSavedValues();
   indicate_with_fade(messageColor);
   checkAndPublishBattery();
@@ -108,6 +110,11 @@ void setup()
     mqttClient.loop();
     delay(25);
   }
+  if (!preventSleep)
+  {
+    goToSleep();
+  }
+  mqttClient.publish(AVAILABILITY_TOPIC, "online", true);
 }
 
 void loop()
@@ -123,7 +130,6 @@ void loop()
     delay(100);
   }
 
-  mqttClient.publish(AVAILABILITY_TOPIC, "online", true);
   // publishState();
   mqttClient.loop();
 
