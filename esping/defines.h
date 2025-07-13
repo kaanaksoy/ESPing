@@ -14,6 +14,7 @@
 
 // MQTT Configuration
 #define MQTT_CLIENT_ID DEVICE_ID
+#define MQTT_BUFFER_SIZE 1024
 #define TOPIC_BASE DEVICE_ID
 #define BUTTON_TOPIC TOPIC_BASE "/button"
 #define STATE_TOPIC TOPIC_BASE "/state"
@@ -24,6 +25,7 @@
 #define SW_VERSION "0.2.0"               // Software version for discovery
 #define HW_VERSION "0.1"                 // Hardware version for discovery
 #define WIFI_TIMEOUT 5000
+#define MQTT_TIMEOUT 5000
 
 // WS2812 LED strip
 #define NEOPIXEL_PIN GPIO_NUM_21                                                     // Regular GPIO
