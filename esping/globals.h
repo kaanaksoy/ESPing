@@ -1,16 +1,8 @@
-#ifndef STATE_H
-#define STATE_H
+#ifndef GLOBALS_H
+#define GLOBALS_H
 
 #include "defines.h"
 #include <ArduinoJson.h>
-
-struct FadeState {
-    bool isActive = false;
-    unsigned long startTime = 0;
-    Color targetColor = DEFAULT_MESSAGE_COLOR;
-    unsigned long lastBlink = 0;
-};
-
 
 
 struct State
@@ -38,6 +30,4 @@ struct State
   FadeState fadeState;
 };
 
-extern State state;
-
-#endif // STATE_H
+#endif // GLOBALS_H

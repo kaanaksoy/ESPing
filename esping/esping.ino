@@ -43,47 +43,11 @@ void setup()
 
 void loop()
 {
-  if (millis() - state.wifiConnectionStartTime > WIFI_TIMEOUT) {
-    goToSleep();
-  }
-  if (millis() - state.mqttConnectionStartTime > MQTT_TIMEOUT) {
-    goToSleep();
-  } 
-  sendButtonPressMessage(true);
-  sendButtonPressMessage(false);
-  setupButton();
-  subscribeToTopics();
-  publishAvailability();
-  sendDiscoveryIfNeeded();
-  update_fade();
-  loadSavedConfig();
-  saveNewColor();
-  saveNewBrightness();
+
+
 
   mqttClient.loop();
-//   if (!preventSleep)
-//   {
-//     goToSleep();
-//   }
 
-//   while (!mqttClient.connected())
-//   {
-//     mqttClient.connect(MQTT_CLIENT_ID, MQTT_USER, MQTT_PASSWORD);
-//     delay(100);
-//   }
-
-//   // publishState();
-//   mqttClient.loop();
-
-//   if (millis() - lastBlink >= 500)
-//   {
-//     lastBlink = millis();
-// #ifdef BUILT_IN_LED_ENABLED
-//     digitalWrite(BUILTIN_LED_PIN, !digitalRead(BUILTIN_LED_PIN));
-// #endif
-//     indicate_with_fade(LOOP_COLOR);
-//   }
-}
 
 // --- Program End
 
@@ -101,7 +65,6 @@ void goToSleep()
 {
   if (state.preventSleep || state.buttonPressedMessagePending) return;
   turn_off_led();
-  esp_sleep_enable_ext1_wakeup(BUTTON_PIN_BITMASK(BUTTON_PIN), ESP_EXT1_WAKEUP_ANY_HIGH);
   turnOffNetworking();
   esp_deep_sleep_start();
 }

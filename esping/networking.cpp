@@ -1,6 +1,27 @@
 #include "networking.h"
 #include "globals.h"
 
+
+void networking_routine()
+{
+  static bool wifi_connected = false;
+  static bool mqtt_connected = false;
+  static unsigned long wifi_connection_start_time = 0;
+  static unsigned long mqtt_connection_start_time = 0;
+
+  if (state.operationState == INITIALIZING) {
+    setupWifi();
+    return;
+  }
+
+  if (state.operationState == CONNECTING) {
+    wifi_connected = 
+    return;
+  }
+  
+}
+
+// Used in INITIALIZING state
 void setupWifi()
 {
   WiFi.mode(WIFI_STA);

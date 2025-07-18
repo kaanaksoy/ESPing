@@ -12,6 +12,14 @@ struct Color
   uint8_t r, g, b;
 };
 
+struct FadeState {
+  bool isActive = false;
+  unsigned long startTime = 0;
+  Color targetColor = DEFAULT_MESSAGE_COLOR;
+  unsigned long lastBlink = 0;
+};
+
+
 extern Adafruit_NeoPixel statusLed;
 extern unsigned long lastBlink;
 
