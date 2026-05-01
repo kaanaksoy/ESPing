@@ -109,3 +109,25 @@ Flash the same firmware to every board. Each device derives its ID from the chip
 ## 🔄 Upgrading from earlier versions
 
 If you previously ran ESPing with hardcoded `DEVICE_ID` (e.g. `esping01-2`), boards will appear as new devices in HA after flashing 0.4.0+. Clean up old retained discovery topics with MQTT Explorer or `mosquitto_pub -r -n` against `homeassistant/+/<old_id>_*/config` to remove the ghost devices.
+
+---
+
+## 🧰 Parts List
+
+The 3D-printed enclosure is sized specifically for these parts. Substitutions may not fit.
+
+| Part                         | Notes                                                         |
+|------------------------------|---------------------------------------------------------------|
+| DFRobot Beetle ESP32-C6      | V1.0 or V1.1, both work                                       |
+| 102040 LiPo cell, 3.7 V      | ~600 mAh, fits the battery pocket exactly                     |
+| 12×12 mm tactile pushbutton  | 4-pin PCB-mount through-hole, ~7 mm body height               |
+| Pulldown resistor            | 220 kΩ – 1 MΩ (higher = lower quiescent current on battery)   |
+
+> **Note:** Earlier revisions used a WS2812 NeoPixel on GPIO21 for press feedback. The original part is no longer available, so the LED has been omitted from the hardware and the enclosure redesigned to match. The firmware still drives GPIO21 — this is harmless when nothing is connected — and the LED color/brightness controls remain in Home Assistant for backwards compatibility.
+
+### Wiring summary
+
+- Button: one side to **GPIO4**, other side to **3.3 V**. Pulldown resistor from GPIO4 to **GND** (keeps the line low when the button is open so EXT1 wake fires on press).
+- Battery: into the Beetle's onboard LiPo connector — the board handles charging and 3.3 V regulation.
+
+---

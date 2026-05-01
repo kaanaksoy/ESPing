@@ -7,7 +7,7 @@
 // DEVICE_PREFIX_FRIENDLY is the human-readable prefix shown in HA.
 #define DEVICE_PREFIX "esping"
 #define DEVICE_PREFIX_FRIENDLY "ESPing"
-#define DISCOVERY_ENABLED        // Comment out to disable MQTT discovery
+#define DISCOVERY_ENABLED // Comment out to disable MQTT discovery
 // #define BUILT_IN_LED_ENABLED // Enable this to use the built-in LED on the
 // Beetle ESP32-C6 V1.0
 
@@ -21,16 +21,16 @@
 #define DISCOVERY_PREFIX                                                       \
   "homeassistant"          // Make sure this matches your HASS MQTT config
 #define SW_VERSION "0.4.0" // Software version for discovery
-#define HW_VERSION "0.1"   // Hardware version for discovery
+#define HW_VERSION "0.2"   // Hardware version for discovery
 
 // Timing — tuned for snappy + reliable press events
-#define WIFI_TIMEOUT_FAST 2500     // Fast-reconnect attempt (cached BSSID/channel)
-#define WIFI_TIMEOUT_FULL 8000     // Full connect fallback (scan + DHCP)
-#define MQTT_CONNECT_TIMEOUT 3000  // Bounded MQTT connect (was unbounded — bug)
+#define WIFI_TIMEOUT_FAST 2500 // Fast-reconnect attempt (cached BSSID/channel)
+#define WIFI_TIMEOUT_FULL 8000 // Full connect fallback (scan + DHCP)
+#define MQTT_CONNECT_TIMEOUT 3000 // Bounded MQTT connect (was unbounded — bug)
 #define MQTT_RECONNECT_TIMEOUT 5000
 #define MQTT_LOOP_WAIT 5000
 #define BLINK_INTERVAL 500
-#define PUBLISH_FLUSH_DELAY 50     // Let TCP bytes leave the NIC before sleep
+#define PUBLISH_FLUSH_DELAY 50 // Let TCP bytes leave the NIC before sleep
 
 // WS2812 LED strip
 #define NEOPIXEL_PIN GPIO_NUM_21   // Regular GPIO
