@@ -2,8 +2,11 @@
 #define DEFINES_H
 
 // User Configurable Settings
-#define DEVICE_NAME "ESPing01-2" // Name of the device as it appears in MQTT
-#define DEVICE_ID "esping01-2"   // Make sure -x is unique
+// DEVICE_ID is now derived at runtime from the chip's MAC (see device_id.cpp).
+// DEVICE_PREFIX is the short tag used in topics:  esping-a1b2c3d4e5f6
+// DEVICE_PREFIX_FRIENDLY is the human-readable prefix shown in HA.
+#define DEVICE_PREFIX "esping"
+#define DEVICE_PREFIX_FRIENDLY "ESPing"
 #define DISCOVERY_ENABLED        // Comment out to disable MQTT discovery
 // #define BUILT_IN_LED_ENABLED // Enable this to use the built-in LED on the
 // Beetle ESP32-C6 V1.0
@@ -14,16 +17,10 @@
 #define BUTTON_PIN_BITMASK(GPIO) (1ULL << GPIO) // 2 ^ GPIO_NUMBER in hex
 
 // MQTT Configuration
-#define MQTT_CLIENT_ID DEVICE_ID
-#define TOPIC_BASE DEVICE_ID
-#define BUTTON_TOPIC TOPIC_BASE "/button"
-#define STATE_TOPIC TOPIC_BASE "/state"
-#define AVAILABILITY_TOPIC TOPIC_BASE "/availability"
-#define COMMAND_TOPIC TOPIC_BASE "/command"
-#define BATTERY_TOPIC TOPIC_BASE "/battery"
+// MQTT_CLIENT_ID, topics, etc. are now built at runtime — see device_id.h
 #define DISCOVERY_PREFIX                                                       \
   "homeassistant"          // Make sure this matches your HASS MQTT config
-#define SW_VERSION "0.3.0" // Software version for discovery
+#define SW_VERSION "0.4.0" // Software version for discovery
 #define HW_VERSION "0.1"   // Hardware version for discovery
 
 // Timing — tuned for snappy + reliable press events
@@ -54,7 +51,8 @@
     // GPIO 0)
 #define VOLTAGE_CALIBRATION_FACTOR                                             \
   1.0186 // Calibration factor for the battery voltage (differentiates between
-         // microcontrollers)
+         // microcontrollers). For a fleet, consider per-unit calibration
+         // stored in Preferences instead.
 #define uS_TO_S_FACTOR                                                         \
   1000000ULL /* Conversion factor for micro seconds to seconds */
 

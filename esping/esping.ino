@@ -7,6 +7,7 @@
 
 #include "driver/rtc_io.h"
 #include "defines.h"
+#include "device_id.h"
 #include "discovery.h"
 
 #if __has_include("credentials.h")
@@ -71,6 +72,15 @@ void setup()
   Serial.println("Booting ESPing...");
 #endif
 
+  // Build DEVICE_ID and topic strings from the chip's MAC. Must run before
+  // anything that touches a topic.
+  initDeviceId();
+
+#ifdef SERIAL_DEBUG_ENABLED
+  Serial.print("Device ID: ");
+  Serial.println(DEVICE_ID);
+#endif
+
 #ifdef BUILT_IN_LED_ENABLED
   pinMode(BUILTIN_LED_PIN, OUTPUT);
   digitalWrite(BUILTIN_LED_PIN, HIGH);
@@ -94,8 +104,6 @@ void setup()
     if (wifiUp) cacheWifiState();
   }
   if (!wifiUp) {
-    // Couldn't get on the network at all — invalidate cache so next wake
-    // does a clean scan, then sleep. The press is lost; nothing to do.
     rtcWifi.valid = false;
     goToSleep();
   }
@@ -111,7 +119,6 @@ void setup()
   statusLed.show();
 
   if (!connectMqtt(MQTT_CONNECT_TIMEOUT)) {
-    // Broker unreachable. Don't spin forever — sleep and try next press.
 #ifdef SERIAL_DEBUG_ENABLED
     Serial.println("MQTT connect failed, sleeping");
 #endif
@@ -119,16 +126,11 @@ void setup()
   }
 
   // ---- Publish the press IMMEDIATELY — this is the critical path ----
-  // retain=false: button events are transient. Retained "pressed" causes
-  // spurious HA triggers on reconnect.
-  mqttClient.publish(BUTTON_TOPIC, "pressed", /*retain=*/false);
+  mqttClient.publish(BUTTON_TOPIC.c_str(), "pressed", /*retain=*/false);
   mqttClient.loop();
 
-  // Mark online for HA availability after the event is on the wire.
-  mqttClient.publish(AVAILABILITY_TOPIC, "online", /*retain=*/true);
-
-  // Subscribe to commands so preventSleep / color updates can land
-  mqttClient.subscribe(COMMAND_TOPIC, 1);
+  mqttClient.publish(AVAILABILITY_TOPIC.c_str(), "online", /*retain=*/true);
+  mqttClient.subscribe(COMMAND_TOPIC.c_str(), 1);
 
 #ifdef DISCOVERY_ENABLED
   checkAndSendDiscovery();
@@ -137,12 +139,10 @@ void setup()
   indicate_with_fade(messageColor);
   checkAndPublishBattery();
 
-  // Brief release event so HA gets both edges
   delay(50);
-  mqttClient.publish(BUTTON_TOPIC, "released", /*retain=*/false);
+  mqttClient.publish(BUTTON_TOPIC.c_str(), "released", /*retain=*/false);
   mqttClient.loop();
 
-  // ---- Stay awake briefly to receive any commands (color/preventSleep) ----
   unsigned long start = millis();
   while (!preventSleep && millis() - start < MQTT_LOOP_WAIT)
   {
@@ -162,7 +162,6 @@ void loop()
     goToSleep();
   }
 
-  // Reconnect WiFi if disconnected
   if (WiFi.status() != WL_CONNECTED)
   {
     WiFi.reconnect();
@@ -177,7 +176,6 @@ void loop()
     }
   }
 
-  // Reconnect MQTT with timeout
   if (!mqttClient.connected())
   {
     if (!connectMqtt(MQTT_RECONNECT_TIMEOUT)) {
@@ -204,13 +202,11 @@ void loop()
 bool connectWifiFast()
 {
   WiFi.mode(WIFI_STA);
-  // Re-apply the cached IP so we skip DHCP entirely.
   IPAddress ip(rtcWifi.local_ip);
   IPAddress gw(rtcWifi.gateway);
   IPAddress sn(rtcWifi.subnet);
   IPAddress dns(rtcWifi.dns);
   WiFi.config(ip, gw, sn, dns);
-  // Pass channel + BSSID to skip the scan.
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD, rtcWifi.channel, rtcWifi.bssid);
 
   unsigned long t0 = millis();
@@ -225,7 +221,6 @@ bool connectWifiFull()
 {
   WiFi.disconnect(true, true);
   WiFi.mode(WIFI_STA);
-  // Clear any static IP config from the fast attempt — fall back to DHCP.
   WiFi.config(IPAddress((uint32_t)0), IPAddress((uint32_t)0),
               IPAddress((uint32_t)0), IPAddress((uint32_t)0));
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
@@ -259,9 +254,8 @@ bool connectMqtt(unsigned long timeout_ms)
   unsigned long t0 = millis();
   while (!mqttClient.connected() && millis() - t0 < timeout_ms)
   {
-    // LWT: if we drop without a clean disconnect, broker marks us offline.
-    if (mqttClient.connect(MQTT_CLIENT_ID, MQTT_USER, MQTT_PASSWORD,
-                           AVAILABILITY_TOPIC, 1, true, "offline"))
+    if (mqttClient.connect(DEVICE_ID.c_str(), MQTT_USER, MQTT_PASSWORD,
+                           AVAILABILITY_TOPIC.c_str(), 1, true, "offline"))
     {
       return true;
     }
@@ -374,9 +368,8 @@ void goToSleep()
   turn_off_led();
   esp_sleep_enable_ext1_wakeup(BUTTON_PIN_BITMASK(BUTTON_PIN), ESP_EXT1_WAKEUP_ANY_HIGH);
 
-  // Clean shutdown: mark offline, flush, disconnect.
   if (mqttClient.connected()) {
-    mqttClient.publish(AVAILABILITY_TOPIC, "offline", /*retain=*/true);
+    mqttClient.publish(AVAILABILITY_TOPIC.c_str(), "offline", /*retain=*/true);
     mqttClient.loop();
     delay(PUBLISH_FLUSH_DELAY);
     mqttClient.disconnect();
@@ -425,7 +418,7 @@ void publishState()
 
   String payload;
   serializeJson(doc, payload);
-  mqttClient.publish(STATE_TOPIC, payload.c_str(), true);
+  mqttClient.publish(STATE_TOPIC.c_str(), payload.c_str(), true);
 }
 
 void checkAndPublishBattery()
@@ -436,5 +429,5 @@ void checkAndPublishBattery()
   doc["batteryPercentage"] = batteryLevel;
   String payload;
   serializeJson(doc, payload);
-  mqttClient.publish(BATTERY_TOPIC, payload.c_str(), true);
+  mqttClient.publish(BATTERY_TOPIC.c_str(), payload.c_str(), true);
 }

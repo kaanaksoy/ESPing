@@ -7,6 +7,7 @@
 #include "esp_wifi.h"
 #include <PubSubClient.h>
 #include "defines.h"
+#include "device_id.h"
 
 #if __has_include("credentials.h")
 #include "credentials.h"

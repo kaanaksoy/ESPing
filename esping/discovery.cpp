@@ -27,7 +27,7 @@ void handleResetDiscovery()
     prefs.clear();
     prefs.end();
 
-    mqttClient.publish(STATE_TOPIC, "resetting", true);
+    mqttClient.publish(STATE_TOPIC.c_str(), "resetting", true);
     delay(100);
     ESP.restart();
 }
@@ -36,16 +36,16 @@ void sendDiscovery()
 {
     if (!mqttClient.connected())
     {
-        mqttClient.connect(MQTT_CLIENT_ID, MQTT_USER, MQTT_PASSWORD);
+        mqttClient.connect(DEVICE_ID.c_str(), MQTT_USER, MQTT_PASSWORD);
         delay(250);
     }
 
     // --- SWITCH: preventSleep ---
     {
         StaticJsonDocument<512> doc;
-        String topic = String(DISCOVERY_PREFIX) + "/switch/" + MQTT_CLIENT_ID + "_prevent_sleep/config";
+        String topic = String(DISCOVERY_PREFIX) + "/switch/" + DEVICE_ID + "_prevent_sleep/config";
         doc["name"] = "Prevent Sleep";
-        doc["uniq_id"] = String(MQTT_CLIENT_ID) + "_prevent_sleep";
+        doc["uniq_id"] = DEVICE_ID + "_prevent_sleep";
         doc["state_topic"] = STATE_TOPIC;
         doc["command_topic"] = COMMAND_TOPIC;
         doc["payload_on"] = "{\"preventSleep\": true}";
@@ -54,7 +54,7 @@ void sendDiscovery()
         doc["retain"] = true;
         doc["icon"] = "mdi:sleep-off";
         JsonObject dev = doc.createNestedObject("device");
-        dev["identifiers"] = MQTT_CLIENT_ID;
+        dev["identifiers"] = DEVICE_ID;
         dev["name"] = DEVICE_NAME;
         dev["model"] = "ESP32-C6";
         dev["mf"] = "Kaan Aksoy";
@@ -71,9 +71,9 @@ void sendDiscovery()
     // --- DEVICE TRIGGER: Button Pressed ---
     {
         StaticJsonDocument<512> doc;
-        String topic = String(DISCOVERY_PREFIX) + "/device_automation/" + MQTT_CLIENT_ID + "_button_press/config";
+        String topic = String(DISCOVERY_PREFIX) + "/device_automation/" + DEVICE_ID + "_button_press/config";
         doc["name"] = "Button Press";
-        doc["uniq_id"] = String(MQTT_CLIENT_ID) + "_button_press";
+        doc["uniq_id"] = DEVICE_ID + "_button_press";
         doc["automation_type"] = "trigger";
         doc["type"] = "button_short_press";
         doc["platform"] = "device_automation";
@@ -82,7 +82,7 @@ void sendDiscovery()
         doc["topic"] = BUTTON_TOPIC;
         doc["payload"] = "pressed";
         JsonObject dev = doc.createNestedObject("device");
-        dev["identifiers"] = MQTT_CLIENT_ID;
+        dev["identifiers"] = DEVICE_ID;
         dev["name"] = DEVICE_NAME;
 
         String payload;
@@ -95,9 +95,9 @@ void sendDiscovery()
     // --- DEVICE TRIGGER: Button Released ---
     {
         StaticJsonDocument<512> doc;
-        String topic = String(DISCOVERY_PREFIX) + "/device_automation/" + MQTT_CLIENT_ID + "_button_release/config";
+        String topic = String(DISCOVERY_PREFIX) + "/device_automation/" + DEVICE_ID + "_button_release/config";
         doc["name"] = "Button Release";
-        doc["uniq_id"] = String(MQTT_CLIENT_ID) + "_button_release";
+        doc["uniq_id"] = DEVICE_ID + "_button_release";
         doc["platform"] = "device_automation";
         doc["automation_type"] = "trigger";
         doc["type"] = "button_short_release";
@@ -106,7 +106,7 @@ void sendDiscovery()
         doc["payload"] = "released";
         doc["availability_topic"] = AVAILABILITY_TOPIC;
         JsonObject dev = doc.createNestedObject("device");
-        dev["identifiers"] = MQTT_CLIENT_ID;
+        dev["identifiers"] = DEVICE_ID;
         dev["name"] = DEVICE_NAME;
 
         String payload;
@@ -119,9 +119,9 @@ void sendDiscovery()
     // --- SENSOR: Battery ---
     {
         StaticJsonDocument<512> doc;
-        String topic = String(DISCOVERY_PREFIX) + "/sensor/" + MQTT_CLIENT_ID + "_battery/config";
+        String topic = String(DISCOVERY_PREFIX) + "/sensor/" + DEVICE_ID + "_battery/config";
         doc["name"] = "Battery";
-        doc["uniq_id"] = String(MQTT_CLIENT_ID) + "_battery";
+        doc["uniq_id"] = DEVICE_ID + "_battery";
         doc["state_topic"] = BATTERY_TOPIC;
         doc["unit_of_measurement"] = "%";
         doc["device_class"] = "battery";
@@ -129,7 +129,7 @@ void sendDiscovery()
         doc["icon"] = "mdi:battery";
         doc["value_template"] = "{{ value_json.batteryPercentage }}";
         JsonObject dev = doc.createNestedObject("device");
-        dev["identifiers"] = MQTT_CLIENT_ID;
+        dev["identifiers"] = DEVICE_ID;
         dev["name"] = DEVICE_NAME;
 
         String payload;
