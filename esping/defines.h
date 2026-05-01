@@ -20,7 +20,7 @@
 // MQTT_CLIENT_ID, topics, etc. are now built at runtime — see device_id.h
 #define DISCOVERY_PREFIX                                                       \
   "homeassistant"          // Make sure this matches your HASS MQTT config
-#define SW_VERSION "0.4.0" // Software version for discovery
+#define SW_VERSION "0.4.1" // Software version for discovery
 #define HW_VERSION "0.2"   // Hardware version for discovery
 
 // Timing — tuned for snappy + reliable press events

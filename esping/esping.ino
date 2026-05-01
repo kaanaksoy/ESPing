@@ -1,14 +1,14 @@
-#include <WiFi.h>
 #include "esp_wifi.h"
-#include <PubSubClient.h>
 #include <Adafruit_NeoPixel.h>
 #include <ArduinoJson.h>
 #include <Preferences.h>
+#include <PubSubClient.h>
+#include <WiFi.h>
 
-#include "driver/rtc_io.h"
 #include "defines.h"
 #include "device_id.h"
 #include "discovery.h"
+#include "driver/rtc_io.h"
 
 #if __has_include("credentials.h")
 #include "credentials.h"
@@ -24,17 +24,16 @@ Preferences prefs;
 // --- RTC memory: survives deep sleep, lost on power cycle / reset.
 // We cache enough to skip the WiFi scan and DHCP on subsequent wakes.
 RTC_DATA_ATTR struct {
-  bool     valid;
-  uint8_t  bssid[6];
-  uint8_t  channel;
+  bool valid;
+  uint8_t bssid[6];
+  uint8_t channel;
   uint32_t local_ip;
   uint32_t gateway;
   uint32_t subnet;
   uint32_t dns;
 } rtcWifi;
 
-struct Color
-{
+struct Color {
   uint8_t r, g, b;
 };
 
@@ -63,8 +62,7 @@ void publishState();
 void checkAndPublishBattery();
 
 // --- Program Begin
-void setup()
-{
+void setup() {
 #ifdef SERIAL_DEBUG_ENABLED
   Serial.begin(115200);
   delay(1000);
@@ -91,17 +89,18 @@ void setup()
   if (rtcWifi.valid) {
     wifiUp = connectWifiFast();
 #ifdef SERIAL_DEBUG_ENABLED
-    Serial.printf("Fast reconnect: %s (%lu ms)\n",
-                  wifiUp ? "OK" : "FAIL", millis());
+    Serial.printf("Fast reconnect: %s (%lu ms)\n", wifiUp ? "OK" : "FAIL",
+                  millis());
 #endif
   }
   if (!wifiUp) {
     wifiUp = connectWifiFull();
 #ifdef SERIAL_DEBUG_ENABLED
-    Serial.printf("Full connect: %s (%lu ms)\n",
-                  wifiUp ? "OK" : "FAIL", millis());
+    Serial.printf("Full connect: %s (%lu ms)\n", wifiUp ? "OK" : "FAIL",
+                  millis());
 #endif
-    if (wifiUp) cacheWifiState();
+    if (wifiUp)
+      cacheWifiState();
   }
   if (!wifiUp) {
     rtcWifi.valid = false;
@@ -144,40 +143,32 @@ void setup()
   mqttClient.loop();
 
   unsigned long start = millis();
-  while (!preventSleep && millis() - start < MQTT_LOOP_WAIT)
-  {
+  while (!preventSleep && millis() - start < MQTT_LOOP_WAIT) {
     mqttClient.loop();
     delay(25);
   }
-  if (!preventSleep)
-  {
+  if (!preventSleep) {
     goToSleep();
   }
 }
 
-void loop()
-{
-  if (!preventSleep)
-  {
+void loop() {
+  if (!preventSleep) {
     goToSleep();
   }
 
-  if (WiFi.status() != WL_CONNECTED)
-  {
+  if (WiFi.status() != WL_CONNECTED) {
     WiFi.reconnect();
     unsigned long t0 = millis();
-    while (WiFi.status() != WL_CONNECTED && millis() - t0 < WIFI_TIMEOUT_FULL)
-    {
+    while (WiFi.status() != WL_CONNECTED && millis() - t0 < WIFI_TIMEOUT_FULL) {
       delay(50);
     }
-    if (WiFi.status() != WL_CONNECTED)
-    {
+    if (WiFi.status() != WL_CONNECTED) {
       goToSleep();
     }
   }
 
-  if (!mqttClient.connected())
-  {
+  if (!mqttClient.connected()) {
     if (!connectMqtt(MQTT_RECONNECT_TIMEOUT)) {
       goToSleep();
     }
@@ -185,8 +176,7 @@ void loop()
 
   mqttClient.loop();
 
-  if (millis() - lastBlink >= BLINK_INTERVAL)
-  {
+  if (millis() - lastBlink >= BLINK_INTERVAL) {
     lastBlink = millis();
 #ifdef BUILT_IN_LED_ENABLED
     digitalWrite(BUILTIN_LED_PIN, !digitalRead(BUILTIN_LED_PIN));
@@ -199,8 +189,7 @@ void loop()
 
 // ---- WiFi helpers ----
 
-bool connectWifiFast()
-{
+bool connectWifiFast() {
   WiFi.mode(WIFI_STA);
   IPAddress ip(rtcWifi.local_ip);
   IPAddress gw(rtcWifi.gateway);
@@ -210,15 +199,13 @@ bool connectWifiFast()
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD, rtcWifi.channel, rtcWifi.bssid);
 
   unsigned long t0 = millis();
-  while (WiFi.status() != WL_CONNECTED && millis() - t0 < WIFI_TIMEOUT_FAST)
-  {
+  while (WiFi.status() != WL_CONNECTED && millis() - t0 < WIFI_TIMEOUT_FAST) {
     delay(5);
   }
   return WiFi.status() == WL_CONNECTED;
 }
 
-bool connectWifiFull()
-{
+bool connectWifiFull() {
   WiFi.disconnect(true, true);
   WiFi.mode(WIFI_STA);
   WiFi.config(IPAddress((uint32_t)0), IPAddress((uint32_t)0),
@@ -226,37 +213,32 @@ bool connectWifiFull()
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
   unsigned long t0 = millis();
-  while (WiFi.status() != WL_CONNECTED && millis() - t0 < WIFI_TIMEOUT_FULL)
-  {
+  while (WiFi.status() != WL_CONNECTED && millis() - t0 < WIFI_TIMEOUT_FULL) {
     delay(5);
   }
   return WiFi.status() == WL_CONNECTED;
 }
 
-void cacheWifiState()
-{
+void cacheWifiState() {
   uint8_t *bssid = WiFi.BSSID();
   if (bssid) {
     memcpy(rtcWifi.bssid, bssid, 6);
   }
-  rtcWifi.channel  = WiFi.channel();
+  rtcWifi.channel = WiFi.channel();
   rtcWifi.local_ip = (uint32_t)WiFi.localIP();
-  rtcWifi.gateway  = (uint32_t)WiFi.gatewayIP();
-  rtcWifi.subnet   = (uint32_t)WiFi.subnetMask();
-  rtcWifi.dns      = (uint32_t)WiFi.dnsIP();
-  rtcWifi.valid    = true;
+  rtcWifi.gateway = (uint32_t)WiFi.gatewayIP();
+  rtcWifi.subnet = (uint32_t)WiFi.subnetMask();
+  rtcWifi.dns = (uint32_t)WiFi.dnsIP();
+  rtcWifi.valid = true;
 }
 
 // ---- MQTT helper ----
 
-bool connectMqtt(unsigned long timeout_ms)
-{
+bool connectMqtt(unsigned long timeout_ms) {
   unsigned long t0 = millis();
-  while (!mqttClient.connected() && millis() - t0 < timeout_ms)
-  {
+  while (!mqttClient.connected() && millis() - t0 < timeout_ms) {
     if (mqttClient.connect(DEVICE_ID.c_str(), MQTT_USER, MQTT_PASSWORD,
-                           AVAILABILITY_TOPIC.c_str(), 1, true, "offline"))
-    {
+                           AVAILABILITY_TOPIC.c_str(), 1, true, "offline")) {
       return true;
     }
     delay(50);
@@ -264,44 +246,41 @@ bool connectMqtt(unsigned long timeout_ms)
   return mqttClient.connected();
 }
 
-void mqttCallback(char *topic, byte *payload, unsigned int length)
-{
+void mqttCallback(char *topic, byte *payload, unsigned int length) {
   bool updated = false;
   StaticJsonDocument<256> doc;
   DeserializationError error = deserializeJson(doc, payload, length);
   if (error)
     return;
 
-  if (doc.containsKey("resetDiscovery") && doc["resetDiscovery"] == true)
-  {
+  if (doc.containsKey("resetDiscovery") && doc["resetDiscovery"] == true) {
     handleResetDiscovery();
     return;
   }
 
-  if (doc.containsKey("preventSleep"))
-  {
+  if (doc.containsKey("preventSleep")) {
     preventSleep = doc["preventSleep"];
     updated = true;
   }
 
-  if (doc.containsKey("color"))
-  {
+  if (doc.containsKey("color")) {
     JsonObject colorObj = doc["color"].as<JsonObject>();
-    if (colorObj.containsKey("r")) messageColor.r = colorObj["r"].as<uint8_t>();
-    if (colorObj.containsKey("g")) messageColor.g = colorObj["g"].as<uint8_t>();
-    if (colorObj.containsKey("b")) messageColor.b = colorObj["b"].as<uint8_t>();
+    if (colorObj.containsKey("r"))
+      messageColor.r = colorObj["r"].as<uint8_t>();
+    if (colorObj.containsKey("g"))
+      messageColor.g = colorObj["g"].as<uint8_t>();
+    if (colorObj.containsKey("b"))
+      messageColor.b = colorObj["b"].as<uint8_t>();
     updated = true;
   }
 
-  if (doc.containsKey("brightness"))
-  {
+  if (doc.containsKey("brightness")) {
     int b = doc["brightness"].as<int>();
     messageBrightness = constrain(b, 0, 255);
     updated = true;
   }
 
-  if (updated)
-  {
+  if (updated) {
     saveNewValues(messageColor, messageBrightness);
     write_led_color(messageColor, messageBrightness);
     indicate_with_fade(messageColor);
@@ -309,42 +288,50 @@ void mqttCallback(char *topic, byte *payload, unsigned int length)
   }
 }
 
-float checkBatteryLevel()
-{
-  float voltage = analogReadMilliVolts(BATT_ADC_PIN) * 2.0 * VOLTAGE_CALIBRATION_FACTOR / 1000.0;
+float checkBatteryLevel() {
+  float voltage = analogReadMilliVolts(BATT_ADC_PIN) * 2.0 *
+                  VOLTAGE_CALIBRATION_FACTOR / 1000.0;
   float percentage = (voltage - 3.0) * 100.0 / (4.2 - 3.0);
   return constrain(percentage, 0, 100);
 }
 
-void write_led_color(Color color, int brightness)
-{
+void write_led_color(Color color, int brightness) {
   float factor = brightness / 255.0;
-  statusLed.setPixelColor(0, color.r * factor, color.g * factor, color.b * factor);
+  statusLed.setPixelColor(0, color.r * factor, color.g * factor,
+                          color.b * factor);
   statusLed.show();
 }
 
 #ifdef SERIAL_DEBUG_ENABLED
-void print_wakeup_reason()
-{
+void print_wakeup_reason() {
   esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
 
-  switch (wakeup_reason)
-  {
-  case ESP_SLEEP_WAKEUP_EXT0:    Serial.println("Wakeup: EXT0"); break;
-  case ESP_SLEEP_WAKEUP_EXT1:    Serial.println("Wakeup: EXT1"); break;
-  case ESP_SLEEP_WAKEUP_TIMER:   Serial.println("Wakeup: timer"); break;
-  case ESP_SLEEP_WAKEUP_TOUCHPAD:Serial.println("Wakeup: touch"); break;
-  case ESP_SLEEP_WAKEUP_ULP:     Serial.println("Wakeup: ULP"); break;
-  default: Serial.printf("Wakeup: not deep sleep (%d)\n", wakeup_reason); break;
+  switch (wakeup_reason) {
+  case ESP_SLEEP_WAKEUP_EXT0:
+    Serial.println("Wakeup: EXT0");
+    break;
+  case ESP_SLEEP_WAKEUP_EXT1:
+    Serial.println("Wakeup: EXT1");
+    break;
+  case ESP_SLEEP_WAKEUP_TIMER:
+    Serial.println("Wakeup: timer");
+    break;
+  case ESP_SLEEP_WAKEUP_TOUCHPAD:
+    Serial.println("Wakeup: touch");
+    break;
+  case ESP_SLEEP_WAKEUP_ULP:
+    Serial.println("Wakeup: ULP");
+    break;
+  default:
+    Serial.printf("Wakeup: not deep sleep (%d)\n", wakeup_reason);
+    break;
   }
 }
 #endif
 
-void indicate_with_fade(Color color)
-{
+void indicate_with_fade(Color color) {
   unsigned long startTime = millis();
-  while (millis() - startTime < FADE_DURATION)
-  {
+  while (millis() - startTime < FADE_DURATION) {
     float progress = (float)(millis() - startTime) / FADE_DURATION;
     float brightness = sin(progress * PI) * messageBrightness;
     brightness = constrain(brightness, 0, messageBrightness);
@@ -355,18 +342,17 @@ void indicate_with_fade(Color color)
   statusLed.show();
 }
 
-void turn_off_led()
-{
+void turn_off_led() {
   statusLed.clear();
   statusLed.show();
   pinMode(NEOPIXEL_PIN, OUTPUT);
   digitalWrite(NEOPIXEL_PIN, LOW);
 }
 
-void goToSleep()
-{
+void goToSleep() {
   turn_off_led();
-  esp_sleep_enable_ext1_wakeup(BUTTON_PIN_BITMASK(BUTTON_PIN), ESP_EXT1_WAKEUP_ANY_HIGH);
+  esp_sleep_enable_ext1_wakeup(BUTTON_PIN_BITMASK(BUTTON_PIN),
+                               ESP_EXT1_WAKEUP_ANY_HIGH);
 
   if (mqttClient.connected()) {
     mqttClient.publish(AVAILABILITY_TOPIC.c_str(), "offline", /*retain=*/true);
@@ -385,8 +371,7 @@ void goToSleep()
   esp_deep_sleep_start();
 }
 
-void loadSavedValues()
-{
+void loadSavedValues() {
   prefs.begin("esping", false);
   messageBrightness = prefs.getUChar("brightness", DEFAULT_LED_BRIGHTNESS);
   messageColor.r = prefs.getUChar("r", DEF_MESS_COLOR_R);
@@ -395,8 +380,7 @@ void loadSavedValues()
   prefs.end();
 }
 
-void saveNewValues(Color messageColor, uint8_t messageBrightness)
-{
+void saveNewValues(Color messageColor, uint8_t messageBrightness) {
   prefs.begin("esping", false);
   prefs.putUChar("brightness", messageBrightness);
   prefs.putUChar("r", messageColor.r);
@@ -405,8 +389,7 @@ void saveNewValues(Color messageColor, uint8_t messageBrightness)
   prefs.end();
 }
 
-void publishState()
-{
+void publishState() {
   StaticJsonDocument<256> doc;
   doc["preventSleep"] = preventSleep;
   JsonObject colorObj = doc.createNestedObject("color");
@@ -421,12 +404,11 @@ void publishState()
   mqttClient.publish(STATE_TOPIC.c_str(), payload.c_str(), true);
 }
 
-void checkAndPublishBattery()
-{
+void checkAndPublishBattery() {
   pinMode(BATT_ADC_PIN, INPUT);
   float batteryLevel = checkBatteryLevel();
   StaticJsonDocument<64> doc;
-  doc["batteryPercentage"] = batteryLevel;
+  doc["batteryPercentage"] = (int)round(batteryLevel);
   String payload;
   serializeJson(doc, payload);
   mqttClient.publish(BATTERY_TOPIC.c_str(), payload.c_str(), true);
